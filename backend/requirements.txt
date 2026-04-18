@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+python-multipart
+pdfminer.six
+pytesseract
+openai
+python-dotenv
+pydantic
+sqlalchemy
+psycopg2-binary
+pypdf
+langchain
+sentence-transformers
+torch
