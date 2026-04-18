@@ -15,6 +15,7 @@ import 'package:legalx/features/analysis/presentation/screens/simulation_screen.
 import 'package:legalx/features/analysis/presentation/screens/score_dashboard_screen.dart';
 import 'package:legalx/features/analysis/presentation/screens/clause_detail_screen.dart';
 import 'package:legalx/features/contract/presentation/screens/drafting_screen.dart';
+import 'package:legalx/features/pitch/presentation/screens/pitch_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -128,6 +129,10 @@ class LegalXApp extends ConsumerWidget {
         GoRoute(
           path: '/drafting',
           builder: (context, state) => const DraftingScreen(),
+        ),
+        GoRoute(
+          path: '/pitch',
+          builder: (context, state) => const PitchScreen(),
         ),
       ],
     );

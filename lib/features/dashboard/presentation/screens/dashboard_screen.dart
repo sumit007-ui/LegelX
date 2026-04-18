@@ -201,6 +201,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: Colors.cyanAccent,
                     onTap: () => context.push('/mobile-scanner'),
                   ),
+                  _MatrixCard(
+                    title: 'Pitch Deck',
+                    subtitle: 'Present LegalX Vision',
+                    icon: Icons.present_to_all_rounded,
+                    color: Colors.blueAccent,
+                    onTap: () => context.push('/pitch'),
+                  ),
                 ],
               ),
 

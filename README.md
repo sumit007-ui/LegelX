@@ -1,16 +1,32 @@
-# legalx
+# LegalX AI: Precision Intelligence & Forensic Ledger
 
-A new Flutter project.
+![LegalX Vision](https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=2070)
 
-## Getting Started
+## 🛡️ The Future of Legal Risk Management
+LegalX is a high-performance, AI-driven forensic suite designed for extreme legal risk assessment. It transforms complex, opaque legal language into actionable intelligence using advanced multi-agent orchestration and spatial risk mapping.
 
-This project is a starting point for a Flutter application.
+### 🚀 Extreme Features
+- **Multi-Agent AI Courtroom**: Watch 3 unique AI models (Prosecutor, Defender, and Judge) autonomously debate your contracts in real-time to find hidden vulnerabilities.
+- **Offline Privacy Shield**: Process sensitive documents 100% on-device. No cloud, no data leakage—pure local intelligence for the ultimate privacy.
+- **3-D Jurisdiction Intelligence**: Photorealistic spatial mapping of legal risk vectors using Cesium 3D engines.
+- **Forensic Risk Heatmap**: Visual highlighting of critical dangers and safe zones within seconds.
+- **AI-Powered Drafting**: Generate professional, legally sound documents using high-precision generative models.
 
-A few resources to get you started if this is your first Flutter project:
+## 🛠️ Technology Stack
+- **Framework**: Flutter (Cross-platform)
+- **Intelligence**: Google Gemini 1.5 Pro/Flash
+- **Spatial Engine**: CesiumJS / Google 3D Tiles
+- **State Management**: Riverpod
+- **Backend**: Python (FastAPI) with Supabase integration
+- **On-Device OCR**: Google ML Kit
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 🏗️ Architecture
+The project follows a **Feature-First Clean Architecture** pattern:
+- `core/`: Shared services (AI, PDF, Platform Utils)
+- `features/`: Modular components (Analysis, Contract, Dashboard, auth, Pitch)
+    - `data/`: Repositories and models
+    - `domain/`: Business logic
+    - `presentation/`: Breathtaking UI/UX
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+---
+*Built for the next generation of legal transparency.*
