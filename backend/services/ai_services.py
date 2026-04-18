@@ -1,8 +1,10 @@
 import json
 import random
+from utils.encryption import secure_transient_processing
 
 class DocumentParser:
-    def parse(self, file_bytes: bytes) -> str:
+    @secure_transient_processing
+    def parse(self, text_or_payload) -> str:
         # Simulated high-precision OCR/Parsing
         return "SAMPLE CONTRACT TEXT: This agreement is made between Party A and Party B. Section 1: Liability... Section 2: Termination..."
 
@@ -43,6 +45,26 @@ class RiskAnalyzer:
             "explanation": explanation,
             "suggested_revision": suggestion
         }
+
+import requests
+
+class OllamaService:
+    def __init__(self, model="llama3"):
+        self.url = "http://localhost:11434/api/generate"
+        self.model = model
+
+    def query(self, prompt: str) -> str:
+        try:
+            response = requests.post(
+                self.url,
+                json={"model": self.model, "prompt": prompt, "stream": False},
+                timeout=30
+            )
+            if response.status_code == 200:
+                return response.json().get("response", "No response from Ollama.")
+            return f"Ollama Error: {response.status_code}"
+        except Exception as e:
+            return f"Local Engine Offline: {e}. (Ensure Ollama is running on localhost:11434)"
 
 class Summarizer:
     def summarize(self, text: str) -> dict:

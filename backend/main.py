@@ -2,6 +2,8 @@ from fastapi import FastAPI, UploadFile, File
 from typing import List
 import uvicorn
 from services.ai_services import DocumentParser, ClauseSegmenter, RiskAnalyzer, Summarizer
+from utils.encryption import encrypt_data
+
 
 app = FastAPI(title="LegalX AI Backend")
 
@@ -16,9 +18,13 @@ async def root():
 
 @app.post("/analyze-document")
 async def analyze_document(file: UploadFile = File(...)):
-    # 1. Parse
-    content = parser.parse(await file.read())
+    # MODULE A: Client-Side / Entry-Point Encryption
+    raw_bytes = await file.read()
+    encrypted_payload = encrypt_data(raw_bytes)
     
+    # 1. Parse (Receives ciphertext wrapper)
+    content = parser.parse(encrypted_payload)
+  
     # 2. Segment
     clauses = segmenter.segment(content)
     

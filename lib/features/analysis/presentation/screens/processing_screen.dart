@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:legalx/core/app_theme.dart';
 import 'package:go_router/go_router.dart';
-import 'package:legalx/core/services/api_service.dart';
+import 'package:legalx/core/services/gemini_service.dart';
+import 'dart:typed_data';
 
 class ProcessingScreen extends StatefulWidget {
-  final String? filePath;
-  const ProcessingScreen({super.key, this.filePath});
+  final Map<String, dynamic>? fileData;
+  const ProcessingScreen({super.key, this.fileData});
 
   @override
   State<ProcessingScreen> createState() => _ProcessingScreenState();
@@ -15,15 +15,7 @@ class ProcessingScreen extends StatefulWidget {
 class _ProcessingScreenState extends State<ProcessingScreen> {
   double _progress = 0.0;
   String _statusMessage = 'Initializing Ledger Validation...';
-  final ApiService _apiService = ApiService();
-
-  final List<Map<String, dynamic>> _stages = [
-    {'progress': 0.15, 'message': 'Secure Ledger Connection Active...'},
-    {'progress': 0.35, 'message': 'Parsing precision data assets...'},
-    {'progress': 0.60, 'message': 'Verifying document integrity hashes...'},
-    {'progress': 0.85, 'message': 'Surface risk analysis complete...'},
-    {'progress': 1.0, 'message': 'Ledger score synchronized.'},
-  ];
+  final GeminiService _geminiService = GeminiService();
 
   @override
   void initState() {
@@ -32,37 +24,44 @@ class _ProcessingScreenState extends State<ProcessingScreen> {
   }
 
   void _startAnalysis() async {
-    // Stage 1 & 2
-    for (int i = 0; i < 2; i++) {
-      await Future.delayed(const Duration(milliseconds: 1500));
-      if (mounted) setState(() { _progress = _stages[i]['progress']; _statusMessage = _stages[i]['message']; });
+    if (widget.fileData == null || widget.fileData!['bytes'] == null) {
+       // Fallback immediately
+       context.go('/summary');
+       return;
     }
 
+    if (mounted) setState(() { _progress = 0.2; _statusMessage = 'Parsing precision data assets...'; });
+    
     Map<String, dynamic>? results;
-    if (widget.filePath != null && !kIsWeb) {
-      try {
-        // Non-web: use file path
-        results = await _apiService.analyzeDocumentPath(widget.filePath!);
-      } catch (e) {
-        debugPrint('Analysis Error: $e');
-        // Fallback to simulated data if backend fails for demo
-      }
-    } else if (widget.filePath != null && kIsWeb) {
-      // On web, filePath may be a blob URL or name — skip backend, use simulated data
-      debugPrint('Web mode: using simulated analysis data');
+    try {
+      if (mounted) setState(() { _progress = 0.5; _statusMessage = 'AI assessing risk surfaces (Images/PDFs)...'; });
+      
+      final bytes = widget.fileData!['bytes'] as Uint8List;
+      final ext = widget.fileData!['extension'] as String;
+      
+      results = await _geminiService.analyzeFileBytes(bytes, ext);
+      
+      if (mounted) setState(() { _progress = 0.9; _statusMessage = 'Finalizing intelligence matrix...'; });
+      await Future.delayed(const Duration(milliseconds: 500));
+    } catch (e) {
+      debugPrint('Analysis Error: $e');
+      if (mounted) setState(() { _progress = 1.0; _statusMessage = 'Failed to load intelligence. Using fallbacks...'; });
+      await Future.delayed(const Duration(seconds: 1));
     }
 
-    // Remaining stages
-    for (int i = 2; i < _stages.length; i++) {
-      await Future.delayed(const Duration(milliseconds: 1200));
-      if (mounted) setState(() { _progress = _stages[i]['progress']; _statusMessage = _stages[i]['message']; });
-    }
+    if (mounted) setState(() { _progress = 1.0; _statusMessage = 'Ledger score synchronized.'; });
+    await Future.delayed(const Duration(milliseconds: 500));
 
-    await Future.delayed(const Duration(seconds: 1));
     if (mounted) {
-      context.go('/summary', extra: results);
+      context.pushReplacement('/summary', extra: {
+        'analysisData': results,
+        'fileBytes': widget.fileData!['bytes'],
+        'extension': widget.fileData!['extension'],
+      });
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {

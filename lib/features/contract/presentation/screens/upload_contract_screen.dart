@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:legalx/core/app_theme.dart';
 import 'package:go_router/go_router.dart';
+import 'package:legalx/core/services/pdf_extraction_service.dart' as legalx_pdf;
 
 class UploadContractScreen extends StatefulWidget {
   const UploadContractScreen({super.key});
@@ -13,36 +14,43 @@ class UploadContractScreen extends StatefulWidget {
 class _UploadContractScreenState extends State<UploadContractScreen> {
   bool _isUploading = false;
   String? _fileName;
-  String? _filePath;
+  PlatformFile? _pickedFile;
 
   Future<void> _pickFile() async {
     final FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
-      allowedExtensions: ['pdf', 'doc', 'docx'],
+      allowedExtensions: ['pdf', 'jpeg', 'jpg', 'png'],
+      withData: true, // Critical for Web and PDF/Image extraction
     );
 
     if (result != null) {
       setState(() {
-        _fileName = result.files.single.name;
-        _filePath = result.files.single.path;
+        _pickedFile = result.files.single;
+        _fileName = _pickedFile!.name;
       });
     }
   }
 
-  void _processContract() {
-    if (_fileName == null) return;
+  void _processContract() async {
+    if (_pickedFile == null || _pickedFile!.bytes == null) return;
     
     setState(() {
       _isUploading = true;
     });
 
-    // Simulate upload and transition to processing
-    Future.delayed(const Duration(seconds: 1), () {
-      if (mounted) {
-        context.push('/processing', extra: _filePath);
-      }
-    });
+    if (mounted) {
+      // Pass the raw bytes and extension to processing screen to use Gemini Multimodal
+      context.push('/processing', extra: {
+        'bytes': _pickedFile!.bytes,
+        'extension': _pickedFile!.extension ?? 'txt',
+      });
+      setState(() {
+        _isUploading = false;
+      });
+    }
   }
+
+
 
   @override
   Widget build(BuildContext context) {

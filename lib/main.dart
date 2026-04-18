@@ -5,25 +5,37 @@ import 'package:legalx/core/app_theme.dart';
 import 'package:legalx/features/contract/presentation/screens/upload_contract_screen.dart';
 import 'package:legalx/features/analysis/presentation/screens/processing_screen.dart';
 import 'package:legalx/features/analysis/presentation/screens/summary_screen.dart';
+import 'package:legalx/features/analysis/presentation/screens/courtroom_screen.dart';
 import 'package:legalx/features/analysis/presentation/screens/risk_heatmap_screen.dart';
 import 'package:legalx/features/dashboard/presentation/screens/dashboard_screen.dart';
+import 'package:legalx/features/dashboard/presentation/screens/subscription_screen.dart';
 import 'package:legalx/features/dashboard/presentation/screens/map_risk_screen.dart';
+import 'package:legalx/features/contract/presentation/screens/mobile_offline_scanner.dart';
 import 'package:legalx/features/analysis/presentation/screens/simulation_screen.dart';
 import 'package:legalx/features/analysis/presentation/screens/score_dashboard_screen.dart';
 import 'package:legalx/features/analysis/presentation/screens/clause_detail_screen.dart';
+import 'package:legalx/features/contract/presentation/screens/drafting_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 Future<void> main() async {
   debugPrint('LEGALX: Starting system boot...');
   WidgetsFlutterBinding.ensureInitialized();
+  
+  try {
+    await dotenv.load(fileName: ".env");
+  } catch (e) {
+    debugPrint("Failed to load .env file: $e");
+  }
+  
   debugPrint('LEGALX: Flutter initialized');
   
   /*
   try {
     debugPrint('LEGALX: Connecting to cloud ledger...');
     await Supabase.initialize(
-      url: 'https://sxfnjcgrwrljffnjtdcd.supabase.co',
-      anonKey: 'sb_publishable_Z-cy6Uj3a3iOKkpY-kMykg_s_pwkBfM',
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
     );
     debugPrint('LEGALX: Cloud connection established');
   } catch (e) {
@@ -56,14 +68,26 @@ class LegalXApp extends ConsumerWidget {
           builder: (context, state) => const DashboardScreen(),
         ),
         GoRoute(
+          path: '/courtroom',
+          builder: (context, state) => const CourtroomScreen(),
+        ),
+        GoRoute(
+          path: '/mobile-scanner',
+          builder: (context, state) => const MobileOfflineScanner(),
+        ),
+        GoRoute(
+          path: '/subscription',
+          builder: (context, state) => const SubscriptionScreen(),
+        ),
+        GoRoute(
           path: '/upload',
           builder: (context, state) => const UploadContractScreen(),
         ),
         GoRoute(
           path: '/processing',
           builder: (context, state) {
-            final filePath = state.extra as String?;
-            return ProcessingScreen(filePath: filePath);
+            final fileData = state.extra as Map<String, dynamic>?;
+            return ProcessingScreen(fileData: fileData);
           },
         ),
         GoRoute(
@@ -100,6 +124,10 @@ class LegalXApp extends ConsumerWidget {
               riskScore: extra['score'],
             );
           },
+        ),
+        GoRoute(
+          path: '/drafting',
+          builder: (context, state) => const DraftingScreen(),
         ),
       ],
     );
