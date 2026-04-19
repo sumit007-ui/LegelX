@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -14,20 +15,31 @@ class GeminiService {
     debugPrint('DEBUG: Gemini API Key loaded (length: ${apiKey.length})');
     
     _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3-flash-preview',
       apiKey: apiKey,
     );
 
-    _scanAvailableModels(apiKey);
+    _deepDiagnostics(apiKey);
   }
 
-  Future<void> _scanAvailableModels(String apiKey) async {
+  Future<void> _deepDiagnostics(String apiKey) async {
     try {
-      debugPrint('DEBUG: Scanning available models for this key...');
-      // Note: The SDK doesn't have a direct listModels, but we can try a dummy call 
-      // to see if we're even authenticated properly.
+      debugPrint('DEBUG: Running Deep Diagnostics (REST v1)...');
+      final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models?key=$apiKey');
+      final response = await http.get(url);
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final List models = data['models'] ?? [];
+        debugPrint('DEBUG: FOUND ${models.length} MODELS:');
+        for (var m in models) {
+          debugPrint('DEBUG: Available model -> ${m['name']}');
+        }
+      } else {
+        debugPrint('DEBUG: REST Diagnostic Failed: ${response.statusCode} - ${response.body}');
+      }
     } catch (e) {
-      debugPrint('DEBUG: Scanner Error: $e');
+      debugPrint('DEBUG: Diagnostic Exception: $e');
     }
   }
 
@@ -93,12 +105,11 @@ class GeminiService {
   /// Unified text generation with smart fallback
   Future<String> _generateWithFallback(List<Content> content) async {
     final modelsToTry = [
+      'gemini-3-flash-preview',
+      'gemini-3-pro-preview',
       'gemini-1.5-flash',
-      'gemini-1.5-flash-001',
-      'gemini-1.5-flash-002',
       'gemini-1.5-flash-latest',
       'gemini-1.0-pro',
-      'gemini-1.0-pro-001',
       'gemini-pro',
     ];
 
