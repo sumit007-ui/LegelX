@@ -124,11 +124,19 @@ class SummaryScreen extends StatelessWidget {
                     'Ledger Integrity: ${score > 75 ? 'High' : 'Moderate'}',
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Document verified and synchronized with precision matrix.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  const Divider(height: 32),
+                  const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.gavel_rounded, size: 14, color: AppColors.textSecondary),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Legal Intelligence Tool: Not a Law Firm',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.textSecondary, letterSpacing: 1),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

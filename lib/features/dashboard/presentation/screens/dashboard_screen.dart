@@ -230,6 +230,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               
               const SizedBox(height: 48),
+
+              // Legal Disclaimer
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 32),
+                  child: Text(
+                    'LegelX is a "Legal Intelligence" tool for informational purposes. We are not a law firm. Always seek professional legal review for high-stakes decisions.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.textSecondary.withOpacity(0.6),
+                      fontSize: 10,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
             ],
           ),
         ),
