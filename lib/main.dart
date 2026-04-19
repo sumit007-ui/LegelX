@@ -16,6 +16,7 @@ import 'package:legalx/features/analysis/presentation/screens/score_dashboard_sc
 import 'package:legalx/features/analysis/presentation/screens/clause_detail_screen.dart';
 import 'package:legalx/features/contract/presentation/screens/drafting_screen.dart';
 import 'package:legalx/features/pitch/presentation/screens/pitch_screen.dart';
+import 'package:legalx/features/analysis/presentation/screens/contract_chat_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -134,6 +135,13 @@ class LegalXApp extends ConsumerWidget {
           path: '/pitch',
           builder: (context, state) => const PitchScreen(),
         ),
+        GoRoute(
+          path: '/chat',
+          builder: (context, state) {
+            final contractText = state.extra as String;
+            return ContractChatScreen(contractText: contractText);
+          },
+        ),
       ],
     );
 
@@ -172,22 +180,15 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
-                borderRadius: BorderRadius.circular(32),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
-              ),
-              child: const Icon(Icons.security_rounded, size: 64, color: Colors.white),
-            ),
+            Image.asset('assets/logo.png', height: 120),
             const SizedBox(height: 32),
+            // Logo text is already in the asset, so we can hide this or keep it subtle
+            const SizedBox(height: 8),
             Text(
-              'LEGALX',
-              style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                color: Colors.white,
-                letterSpacing: 4,
-                fontWeight: FontWeight.w900,
+              'Case Closed.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.white70,
+                letterSpacing: 2,
               ),
             ),
             const SizedBox(height: 8),

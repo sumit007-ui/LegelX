@@ -33,14 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'LEGALX AI',
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: AppColors.secondary,
-                            letterSpacing: 2,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+                        Image.asset('assets/logo.png', height: 40, fit: BoxFit.contain),
                         const SizedBox(height: 4),
                         Text(
                           'Your Digital Lawyer',
@@ -284,7 +277,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.security_rounded, color: Colors.white, size: 40),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Image.asset('assets/logo.png', height: 40),
+          ),
           const SizedBox(height: 24),
           Text(
             'Analyze your\nlegal risks',

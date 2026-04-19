@@ -6,13 +6,58 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class GeminiService {
   static bool isOfflineMode = false; // Global toggle for hackathon demo
 
-  final GenerativeModel _model;
+  late GenerativeModel _model;
+  ChatSession? _currentChatSession;
 
-  GeminiService()
-      : _model = GenerativeModel(
-          model: 'gemini-1.5-flash-latest',
-          apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
-        );
+  GeminiService() {
+    final apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    debugPrint('DEBUG: Gemini API Key loaded (length: ${apiKey.length})');
+    
+    _model = GenerativeModel(
+      model: 'gemini-1.5-flash',
+      apiKey: apiKey,
+    );
+
+    _scanAvailableModels(apiKey);
+  }
+
+  Future<void> _scanAvailableModels(String apiKey) async {
+    try {
+      debugPrint('DEBUG: Scanning available models for this key...');
+      // Note: The SDK doesn't have a direct listModels, but we can try a dummy call 
+      // to see if we're even authenticated properly.
+    } catch (e) {
+      debugPrint('DEBUG: Scanner Error: $e');
+    }
+  }
+
+  /// Starts a new stateful chat session
+  ChatSession startChatSession({List<Content>? history}) {
+    _currentChatSession = _model.startChat(history: history);
+    return _currentChatSession!;
+  }
+
+  /// Sends a message within a session and returns the response
+  Future<String> sendMessage(ChatSession session, String message) async {
+    try {
+      final response = await session.sendMessage(Content.text(message));
+      return response.text ?? 'No response from AI.';
+    } catch (e) {
+      debugPrint('Chat Error: $e');
+      return 'Error: $e';
+    }
+  }
+
+  /// Initializes a chat session with the contract text as context
+  ChatSession startContractChat(String contractText) {
+    final history = [
+      Content.text('You are a legal assistant. I will provide you with a contract text, and you will help me analyze it and answer questions based on it.'),
+      Content.model([TextPart('Understood. Please provide the contract text, and I will be ready to assist you.')]),
+      Content.text('Here is the contract text:\n\n$contractText'),
+      Content.model([TextPart('I have received the contract. I am now ready to answer any questions or perform specific analyses on this text.')]),
+    ];
+    return startChatSession(history: history);
+  }
 
   /// LOCAL ENGINE (OFFLINE MODE)
   /// Processes text without any API calls using keyword heuristics.
@@ -40,8 +85,46 @@ class GeminiService {
       'risk_score': score > 100 ? 100 : score,
       'risks': risks.isEmpty ? [{'title': 'Safe Patterns', 'description': 'No critical risks found by local engine.', 'isHigh': false}] : risks,
       'missing_clauses': ['Switch to Online Mode for deep semantic analysis.'],
+      'full_text': 'PROCESSED LOCALLY: Full text extraction is restricted in offline mode. Please switch to online mode for full document digitization.',
       'is_offline': true,
     };
+  }
+
+  /// Unified text generation with smart fallback
+  Future<String> _generateWithFallback(List<Content> content) async {
+    final modelsToTry = [
+      'gemini-1.5-flash',
+      'gemini-1.5-flash-001',
+      'gemini-1.5-flash-002',
+      'gemini-1.5-flash-latest',
+      'gemini-1.0-pro',
+      'gemini-1.0-pro-001',
+      'gemini-pro',
+    ];
+
+    Object? lastError;
+    for (var modelName in modelsToTry) {
+      try {
+        debugPrint('DEBUG: Attempting AI call with model: $modelName');
+        final currentModel = GenerativeModel(
+          model: modelName,
+          apiKey: dotenv.env['GEMINI_API_KEY'] ?? '',
+        );
+        
+        final response = await currentModel.generateContent(content);
+        
+        if (response.text != null) {
+          debugPrint('DEBUG: Successfully got response from $modelName');
+          return response.text!;
+        }
+      } catch (e) {
+        debugPrint('DEBUG: Model $modelName failed: $e');
+        lastError = e;
+        // If it's a 404 (not found) or 400 (unsupported), we try the next one
+        continue;
+      }
+    }
+    throw lastError ?? Exception('All models failed to respond.');
   }
 
   Future<String> simplifyLegalText(String text) async {
@@ -55,10 +138,7 @@ class GeminiService {
         $text
       ''';
 
-      final content = [Content.text(prompt)];
-      final response = await _model.generateContent(content);
-      
-      return response.text ?? 'Could not simplify the text. Please try again.';
+      return await _generateWithFallback([Content.text(prompt)]);
     } catch (e) {
       debugPrint('Gemini Error: $e');
       return 'Error connecting to AI: $e';
@@ -69,8 +149,6 @@ class GeminiService {
     // OFFLINE MODE INJECTION
     if (isOfflineMode) {
       await Future.delayed(const Duration(seconds: 2)); // Simulate local processing
-      // In a real app, you'd use a local OCR like Google ML Kit on device.
-      // For demo, we'll analyze a mock string.
       return getLocalAnalysis("Standard Employment Contract with Termination and Liability Clauses.");
     }
 
@@ -86,6 +164,7 @@ class GeminiService {
            - "isHigh": boolean.
            - "box_2d": [ymin, xmin, ymax, xmax] coordinates (0-1000) of exactly where this text is in the image.
         4. "missing_clauses": A list of strings.
+        5. "full_text": The complete extracted text from the document. THIS IS CRITICAL.
         
         RETURN ONLY VALID JSON. IMPORTANT: Cite real-world legal acts and provide precise [ymin, xmin, ymax, xmax] for the box_2d field if it is an image.
       ''';
@@ -103,9 +182,9 @@ class GeminiService {
         ])
       ];
       
-      final response = await _model.generateContent(content);
+      final resultText = await _generateWithFallback(content);
       
-      String jsonString = response.text ?? '{}';
+      String jsonString = resultText;
       jsonString = jsonString.replaceAll('```json', '').replaceAll('```', '').trim();
       
       return json.decode(jsonString) as Map<String, dynamic>;
@@ -116,23 +195,30 @@ class GeminiService {
   }
 
   /// EXTREME FEATURE: MULTI-AGENT COURTROOM DEBATE
-  /// This proves it's not a simple chatbot by chaining 3 distinct agent personas.
   Future<Map<String, String>> orchestrateCourtroomDebate(String contractText) async {
     try {
-      // Agent 1: The Attacker (Prosecutor)
+      // Agent 1: The Attacker
       final attackPrompt = 'You are a ruthless prosecutor lawyer. Attack this contract, find 2 major loopholes to exploit Party B. Be aggressive. Contract: $contractText';
-      final attackerRes = await _model.generateContent([Content.text(attackPrompt)]);
-      final attackArgument = attackerRes.text ?? 'Attack failed.';
+      final attackArgument = await _generateWithFallback([Content.text(attackPrompt)]);
 
       // Agent 2: The Defender
       final defensePrompt = 'You are a brilliant defense lawyer. Read the contract and the Prosecutor\'s attack. Defend the contract and refute their 2 points. Prosecutor: $attackArgument \n\n Contract: $contractText';
-      final defenderRes = await _model.generateContent([Content.text(defensePrompt)]);
-      final defenseArgument = defenderRes.text ?? 'Defense failed.';
+      final defenseArgument = await _generateWithFallback([Content.text(defensePrompt)]);
 
       // Agent 3: The Judge
-      final judgePrompt = 'You are a neutral Supreme Court Judge. Review the Prosecutor\'s Attack and Defender\'s argument. Give a final short Verdict on who wins and if the contract is legally sound. \n\n Attack: $attackArgument \n Defense: $defenseArgument';
-      final judgeRes = await _model.generateContent([Content.text(judgePrompt)]);
-      final judgeVerdict = judgeRes.text ?? 'Verdict failed.';
+      final judgePrompt = '''
+      You are the SUPREME JUDGE in a virtual legal tribunal.
+      The Prosecutor and Defender have debated the following clause:
+      
+      CLAUSE: $contractText
+      
+      PROSECUTOR\'S ATTACK: $attackArgument
+      DEFENDER\'S SHIELD: $defenseArgument
+      
+      Provide a FINAL VERDICT based on the Indian Contract Act or international law. 
+      Is it enforceable? What are the risks? Be extremely precise.
+    ''';
+      final judgeVerdict = await _generateWithFallback([Content.text(judgePrompt)]);
 
       return {
         'attack': attackArgument,
@@ -145,7 +231,6 @@ class GeminiService {
     }
   }
 
-  /// EXTREME FEATURE: AUTO-NEGOTIATOR (Pushback Email)
   Future<String> generateNegotiationEmail(String extractedClause) async {
     try {
       final prompt = '''
@@ -157,8 +242,7 @@ class GeminiService {
         Keep it concise, ready to send from the user.
       ''';
       
-      final response = await _model.generateContent([Content.text(prompt)]);
-      return response.text ?? 'Error generating email. Please try again.';
+      return await _generateWithFallback([Content.text(prompt)]);
     } catch (e) {
       debugPrint('Negotiation Error: $e');
       return 'Error: $e';

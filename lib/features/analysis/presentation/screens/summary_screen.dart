@@ -18,6 +18,7 @@ class SummaryScreen extends StatelessWidget {
     final Map<String, dynamic>? data = analysisData?['analysisData'];
     final Uint8List? fileBytes = analysisData?['fileBytes'];
     final String? extension = analysisData?['extension'];
+    final String fullText = data?['full_text'] ?? '';
 
     final int score = data?['risk_score'] ?? 82;
     final String summaryText = data?['summary'] ?? 
@@ -203,7 +204,7 @@ class SummaryScreen extends StatelessWidget {
                    context: context,
                    isScrollControlled: true,
                    backgroundColor: Colors.transparent,
-                   builder: (context) => _BabelDecoderSheet(text: summaryText),
+                   builder: (context) => _BabelDecoderSheet(text: fullText.isNotEmpty ? fullText : summaryText),
                  );
               },
               style: ElevatedButton.styleFrom(
@@ -215,6 +216,22 @@ class SummaryScreen extends StatelessWidget {
               ),
               label: const Text(
                 'BABEL TRANSLATOR (PUNJABI/HINDI)',
+                style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.forum_rounded),
+              onPressed: () => context.push('/chat', extra: fullText.isNotEmpty ? fullText : summaryText),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 64),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                elevation: 0,
+              ),
+              label: const Text(
+                'CHAT WITH CASE AI',
                 style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1.2),
               ),
             ),
@@ -262,7 +279,7 @@ class SummaryScreen extends StatelessWidget {
                          context: context,
                          isScrollControlled: true,
                          backgroundColor: Colors.transparent,
-                         builder: (context) => _FullSimplificationSheet(text: summaryText),
+                         builder: (context) => _FullSimplificationSheet(text: fullText.isNotEmpty ? fullText : summaryText),
                        );
                     },
                     style: ElevatedButton.styleFrom(

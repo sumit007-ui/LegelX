@@ -17,7 +17,7 @@ class _PitchScreenState extends State<PitchScreen> {
   final List<PitchSlide> _slides = [
     PitchSlide(
       title: 'THE LEGAL GAP',
-      subtitle: '$1.2 Trillion in annual contract leakages globally.',
+      subtitle: '\$1.2 Trillion in annual contract leakages globally.',
       content: '90% of SMEs cannot afford high-end legal review, leading to critical risk exposure.',
       icon: Icons.warning_amber_rounded,
     ),
